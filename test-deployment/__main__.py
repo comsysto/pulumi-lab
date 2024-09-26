@@ -5,7 +5,7 @@ import json
 
 # Define a prefix
 prefix = "pulumi-lab"
-
+short_prefix="pulumi"
 
 # Helper function to add prefix
 def prefixed(name):
@@ -47,12 +47,18 @@ vpc = aws.ec2.Vpc("vpc",
                   tags=create_tags("vpc")
                   )
 
-# Create a single subnet
+# Create a public subnets
 subnet = aws.ec2.Subnet("public-subnet",
                         vpc_id=vpc.id,
                         cidr_block="10.0.1.0/24",
                         availability_zone="eu-west-1a",  # Adjust as needed
                         tags=create_tags("public-subnet")
+                        )
+subnet2 = aws.ec2.Subnet("public-subnet2",
+                        vpc_id=vpc.id,
+                        cidr_block="10.0.2.0/24",
+                        availability_zone="eu-west-1b",  # Adjust as needed
+                        tags=create_tags("public-subnet2")
                         )
 
 # Create an internet gateway
@@ -72,15 +78,21 @@ route_table = aws.ec2.RouteTable("route-table",
                                  )
 
 # Associate the single subnet with the route table
-route_table_association = aws.ec2.RouteTableAssociation("route-table-assoc",
+route_table_association1 = aws.ec2.RouteTableAssociation("route-table-assoc1",
                                                         subnet_id=subnet.id,
+                                                        route_table_id=route_table.id
+                                                        )
+route_table_association2 = aws.ec2.RouteTableAssociation("route-table-assoc2",
+                                                        subnet_id=subnet2.id,
                                                         route_table_id=route_table.id
                                                         )
 
 cluster = aws.ecs.Cluster("cluster",
                           name=prefixed("ecs-cluster"),
+
                           tags=create_tags("ecs-cluster")
                           )
+
 
 # Create a SecurityGroup that permits HTTP ingress and unrestricted egress.
 sg = aws.ec2.SecurityGroup('sg',
@@ -89,7 +101,7 @@ sg = aws.ec2.SecurityGroup('sg',
                            description='Enable HTTP access',
                            ingress=[{
                                'protocol': 'tcp',
-                               'from_port': 80,
+                               'from_port': 0,
                                'to_port': 80,
                                'cidr_blocks': ['0.0.0.0/0'],
                            }],
@@ -101,6 +113,40 @@ sg = aws.ec2.SecurityGroup('sg',
                            }],
                            tags=create_tags("sg")
                            )
+
+
+
+# Create a load balancer to listen for HTTP traffic on port 80.
+alb = aws.lb.LoadBalancer('alb',
+    name=(prefixed("alb")),
+	security_groups=[sg.id],
+	subnets=[subnet.id, subnet2.id],
+    tags=create_tags("alb")
+)
+
+tg = aws.lb.TargetGroup('tg',
+    name_prefix=short_prefix,
+    #name=(prefixed("tg")),
+	port=80,
+	protocol='HTTP',
+	target_type='ip',
+	vpc_id=vpc.id,
+    tags=create_tags("tg")
+)
+
+wl = aws.lb.Listener('listener',
+	load_balancer_arn=alb.arn,
+	port=80,
+    default_actions=[
+        aws.lb.ListenerDefaultActionArgs(
+            type='forward',
+            target_group_arn=tg.arn,
+        ),
+    ],
+    #opts=ResourceOptions(replace_on_changes=["*"], depends_on=[tg]), 
+    tags=create_tags("listener")
+)
+
 
 role = aws.iam.Role('task-exec-role',
                     assume_role_policy=json.dumps({
@@ -154,9 +200,16 @@ service = awsx.ecs.FargateService("service",
                                   cluster=cluster.arn,
                                   task_definition=task_definition.arn,
                                   network_configuration={
-                                      "subnets": [subnet.id],
+                                      "subnets": [subnet.id, subnet2.id],
                                       "assignPublicIp": True,
                                       "securityGroups": [sg.id],
                                   },
+                                  load_balancers=[{
+                                        "container_name": "app",
+                                        "container_port": "80",
+                                        "target_group_arn": tg.arn,
+                                  }],
                                   tags=create_tags('service'),
                                   )
+
+export('url', alb.dns_name)
