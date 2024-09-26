@@ -1,0 +1,11 @@
+name: nginx-kreso-ecs
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv
+description: A Python program to deploy a containerized service on AWS
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: container-aws-python
