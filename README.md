@@ -6,6 +6,6 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-pulumi login s3://pulumi-lab-state
+pulumi login s3://pulumi-lab-state2
 pulumi preview
 ```

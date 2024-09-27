@@ -30,6 +30,12 @@ rpa_name = prefixed("task-exec-policy")
 task_definition_name = prefixed("app-task-definition")
 service_name = prefixed("service")
 
+# Define ECS cluster and other variables (Replace with actual values or relevant resources)
+image_uri = "nginx"
+cpu = "256"  # CPU units
+memory = "512"  # Memory in MiB
+container_port = 80  # Container port
+default_target_group = "arn:aws:elasticloadbalancing:region:account_id:targetgroup/your-targetgroup"
 
 
 # Define a helper function to create tags
@@ -187,14 +193,6 @@ rpa = aws.iam.RolePolicyAttachment(rpa_name,
                                    role=role.name,
                                    policy_arn='arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy',
                                    )
-
-
-# Define ECS cluster and other variables (Replace with actual values or relevant resources)
-image_uri = "nginx"
-cpu = "256"  # CPU units
-memory = "512"  # Memory in MiB
-container_port = 80  # Container port
-default_target_group = "arn:aws:elasticloadbalancing:region:account_id:targetgroup/your-targetgroup"
 
 
 # Spin up a load balanced service running our container image.
