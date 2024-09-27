@@ -45,5 +45,5 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: image-scan-results
+          name: pulumi/pulumi_preview
           path: pulumi/pulumi_preview.txt
