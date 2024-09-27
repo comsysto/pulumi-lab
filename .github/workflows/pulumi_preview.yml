@@ -31,12 +31,19 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
 
-      - name: Install pulumi
-        run: pip install pulumi
+      - name: Install pulumi and login to S3
+        run: |
+          pip install pulumi
+          pulumi login s3://pulumi-lab-state2
 
       - name: Pulumi Preview
         run: |
-          pulumi login s3://pulumi-lab-state2
           pulumi stack select dev
-          pulumi preview
+          pulumi preview > pulumi_preview.txt
         working-directory: pulumi
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-scan-results
+          path: pulumi/pulumi_preview.txt
