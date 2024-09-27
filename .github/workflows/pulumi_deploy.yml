@@ -10,27 +10,80 @@ on:
         - dev
         default: dev
 
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+  PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+  GITHUB_ENVIRONMENT: ${{ inputs.environment }}
+
+  AWS_RESOURCE_PREFIX: "pulumi-${{ inputs.environment }}"
+  AWS_RESOURCE_SHORT_PREFIX: "p-${{ inputs.environment }}" # Max 6 chars
+  AWS_AZ_NUMBER: "2"
+  CONTAINER_IMAGE_URI: "nginx"
+  CONTAINER_CPU: "256"
+  CONTAINER_MEMORY: "512"
+  CONTAINER_PORT: "80"
+
+
 jobs:
+
+  preview:
+    name: Pulumi Preview
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-region: ${{ env.AWS_REGION }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+
+      - name: Install pulumi and login to S3
+        run: |
+          pip install pulumi
+          pulumi login s3://pulumi-lab-state2
+
+      - name: Setup pulumi stack and variables
+        run: |
+          pulumi stack select --create $GITHUB_ENVIRONMENT
+          pulumi config set aws:region $AWS_REGION
+          pulumi config set region $AWS_REGION
+          pulumi config set az_number $AWS_AZ_NUMBER
+          pulumi config set prefix $AWS_RESOURCE_PREFIX
+          pulumi config set short_prefix $AWS_RESOURCE_SHORT_PREFIX
+          pulumi config set image_uri $CONTAINER_IMAGE_URI
+          pulumi config set cpu $CONTAINER_CPU
+          pulumi config set memory $CONTAINER_MEMORY
+          pulumi config set container_port $CONTAINER_PORT
+        working-directory: pulumi
+
+      - name: Pulumi Preview
+        run: |
+          pulumi preview
+        working-directory: pulumi
+
+      - name: Pulumi Preview Details
+        run: |
+          pulumi preview --json
+        working-directory: pulumi
+
 
   deploy:
     name: Pulumi Deploy
     runs-on: ubuntu-latest
+    needs: preview
     environment: ${{ inputs.environment }}
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
-      GITHUB_ENVIRONMENT: ${{ inputs.environment }}
-
-      AWS_RESOURCE_PREFIX: "pulumi-${{ inputs.environment }}"
-      AWS_RESOURCE_SHORT_PREFIX: "p-${{ inputs.environment }}" # Max 6 chars
-      AWS_AZ_NUMBER: "2"
-      CONTAINER_IMAGE_URI: "nginx"
-      CONTAINER_CPU: "256"
-      CONTAINER_MEMORY: "512"
-      CONTAINER_PORT: "80"
 
     steps:
       - uses: actions/checkout@v2
