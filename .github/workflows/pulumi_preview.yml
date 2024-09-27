@@ -35,14 +35,16 @@ jobs:
       CONTAINER_MEMORY: "512"
       CONTAINER_PORT: "80"
 
+      TEST_INPUT: ${{secrets[github.event.inputs.test_input]}}
+
     steps:
       - uses: actions/checkout@v2
 
-      - name: Mask secret vars
-        run: echo "::add-mask::${{ inputs.test_input }}"
+      # - name: Mask secret vars
+      #   run: echo "::add-mask::${{ inputs.test_input }}"
 
       - name: Print secret vars
-        run: echo "${{ inputs.test_input }}"
+        run: echo "$TEST_INPUT"
 
       # - uses: actions/setup-python@v2
       #   with:
