@@ -35,10 +35,14 @@ jobs:
       - run: pip install -r requirements.txt
         working-directory: pulumi
 
-      - name: Applying infrastructure 🚀
-        uses: pulumi/actions@v4
-        with:
-          command: preview
-          stack-name: test-deployment/dev
-          cloud-url: s3://pulumi-lab-state2
-          organization: organization
+      - run: |
+          pulumi login s3://pulumi-lab-state2
+          pulumi preview
+
+      # - name: Applying infrastructure 🚀
+      #   uses: pulumi/actions@v4
+      #   with:
+      #     command: preview
+      #     stack-name: test-deployment/dev
+      #     cloud-url: s3://pulumi-lab-state2
+
