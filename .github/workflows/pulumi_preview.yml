@@ -39,11 +39,6 @@ jobs:
       - name: Pulumi Preview
         run: |
           pulumi stack select dev
-          pulumi preview | tee pulumi_preview.txt
+          pulumi --color always -j preview
         working-directory: pulumi
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: pulumi/pulumi_preview
-          path: pulumi/pulumi_preview.txt
