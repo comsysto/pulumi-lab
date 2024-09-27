@@ -100,7 +100,6 @@ jobs:
           pulumi config set memory $CONTAINER_MEMORY
           pulumi config set container_port $CONTAINER_PORT
           pulumi config set host_port $HOST_PORT
-          pulumi config set host_port $HOST_PORT
         working-directory: pulumi
 
       - name: Pulumi Deploy Preview
@@ -161,7 +160,6 @@ jobs:
           pulumi config set cpu $CONTAINER_CPU
           pulumi config set memory $CONTAINER_MEMORY
           pulumi config set container_port $CONTAINER_PORT
-          pulumi config set host_port $HOST_PORT
           pulumi config set host_port $HOST_PORT
         working-directory: pulumi
 
