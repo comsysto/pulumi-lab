@@ -9,6 +9,13 @@ on:
         options: 
         - dev
         default: dev
+      pulumi_task:
+        type: choice
+        description: Pulumi task to execute
+        options: 
+        - deploy
+        - destroy
+        default: deploy
       az_number:
         type: string
         description: Number of Availability Zones
@@ -51,6 +58,7 @@ env:
   CONTAINER_PORT: ${{ inputs.container_port }}
   HOST_PORT: ${{ inputs.host_port }}
 
+  PULUMI_TASK: ${{ inputs.pulumi_task }}
 
 jobs:
 
@@ -66,7 +74,8 @@ jobs:
           python-version: 3.12
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
+
         with:
           aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
           aws-region: ${{ env.AWS_REGION }}
@@ -93,19 +102,27 @@ jobs:
           pulumi config set host_port $HOST_PORT
         working-directory: pulumi
 
-      - name: Pulumi Preview
+      - name: Pulumi Deploy Preview
+        if: env.PULUMI_TASK == 'deploy'
         run: |
           pulumi preview
         working-directory: pulumi
 
-      - name: Pulumi Preview Details
+      - name: Pulumi Deploy Preview (Detailed)
+        if: env.PULUMI_TASK == 'deploy'
         run: |
           pulumi preview --json
         working-directory: pulumi
 
+      - name: Pulumi Destroy Preview
+        if: env.PULUMI_TASK == 'destroy'
+        run: |
+          pulumi destroy --preview-only
+        working-directory: pulumi
 
-  deploy:
-    name: Pulumi Deploy
+
+  apply:
+    name: Pulumi Apply
     runs-on: ubuntu-latest
     needs: preview
     environment: ${{ inputs.environment }}
@@ -118,7 +135,8 @@ jobs:
           python-version: 3.12
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
+
         with:
           aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
           aws-region: ${{ env.AWS_REGION }}
@@ -145,7 +163,14 @@ jobs:
           pulumi config set host_port $HOST_PORT
         working-directory: pulumi
 
-      - name: Pulumi Deploy Infrastructure
+      - name: Pulumi Deploy
         run: |
           pulumi up --yes
         working-directory: pulumi
+        if: env.PULUMI_TASK == 'deploy'
+
+      - name: Pulumi Destroy
+        run: |
+          pulumi destroy --yes
+        working-directory: pulumi
+        if: env.PULUMI_TASK == 'destroy'
