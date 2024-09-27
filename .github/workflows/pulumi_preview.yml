@@ -43,12 +43,8 @@ jobs:
         run: |
           TEST_INPUT="${{ inputs.TEST_INPUT }}"
           echo "::add-mask::$TEST_INPUT"
-          echo "TEST_INPUT=$TEST_INPUT" >> $GITHUB_ENV
+          echo TEST_INPUT=$TEST_INPUT >> $GITHUB_ENV
           echo $TEST_INPUT
-        env:
-          # secrets are masked by default
-          TEST_INPUT: ${{secrets.TEST_INPUT}}
-
 
       # - uses: actions/setup-python@v2
       #   with:
