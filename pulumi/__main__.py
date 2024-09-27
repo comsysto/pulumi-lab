@@ -16,8 +16,12 @@ resource_group_name = prefixed("resource-group")
 vpc_name = prefixed("vpc")
 public_subnet1_name = prefixed("public-subnet1")
 public_subnet2_name = prefixed("public-subnet2")
+private_subnet1_name = prefixed("private-subnet1")
 internet_gateway_name = prefixed("internet-gateway")
+nat_gw_name = prefixed("nat-gateway")
+eip = prefixed("eip")
 route_table_name = prefixed("route-table")
+private_route_table_name = prefixed("private-route-table")
 route_table_association1_name = prefixed("route-table-assoc1")
 route_table_association2_name = prefixed("route-table-assoc2")
 ecs_cluster_name = prefixed("ecs-cluster")
@@ -73,7 +77,7 @@ vpc = aws.ec2.Vpc(vpc_name,
                   tags=create_tags(vpc_name)
                   )
 
-# Create a public subnets
+# Create public subnets
 subnet1 = aws.ec2.Subnet(public_subnet1_name,
                         vpc_id=vpc.id,
                         cidr_block="10.0.1.0/24",
@@ -87,11 +91,32 @@ subnet2 = aws.ec2.Subnet(public_subnet2_name,
                         tags=create_tags(public_subnet2_name)
                         )
 
+# Create private subnet
+private_subnet1 = aws.ec2.Subnet(private_subnet1_name,
+                        vpc_id=vpc.id,
+                        cidr_block="10.0.3.0/24",
+                        availability_zone="eu-west-1a",  # Adjust as needed
+                        map_public_ip_on_launch=False,
+                        tags=create_tags(private_subnet1_name)
+                        )
+
 # Create an internet gateway
 internet_gateway = aws.ec2.InternetGateway(internet_gateway_name,
                                            vpc_id=vpc.id,
                                            tags=create_tags(internet_gateway_name)
                                            )
+
+# Create an Elastic IP for the NAT Gateway
+eip = aws.ec2.Eip(eip,
+    tags=create_tags(eip)
+)
+
+# Create a NAT Gateway in the private subnet
+nat_gateway = aws.ec2.NatGateway(nat_gw_name,
+    subnet_id=subnet1.id,
+    allocation_id=eip.allocation_id,
+    tags=create_tags(nat_gw_name)
+)
 
 # Create a route table
 route_table = aws.ec2.RouteTable(route_table_name,
@@ -103,6 +128,17 @@ route_table = aws.ec2.RouteTable(route_table_name,
                                  tags=create_tags(route_table_name)
                                  )
 
+# Create a Route Table for the private subnet
+private_route_table = aws.ec2.RouteTable(private_route_table_name,
+    vpc_id=vpc.id,
+    routes=[{
+        "cidr_block": "0.0.0.0/0",
+        "gateway_id": nat_gateway.id
+    }],
+    tags=create_tags(private_route_table_name)
+)
+
+
 # Associate the single subnet with the route table
 route_table_association1 = aws.ec2.RouteTableAssociation(route_table_association1_name,
                                                         subnet_id=subnet1.id,
@@ -112,6 +148,12 @@ route_table_association2 = aws.ec2.RouteTableAssociation(route_table_association
                                                         subnet_id=subnet2.id,
                                                         route_table_id=route_table.id
                                                         )
+
+# Associate Private subnet with the Route Table
+route_table_association = aws.ec2.RouteTableAssociation("route-table-assoc3",
+    subnet_id=private_subnet1.id,
+    route_table_id=private_route_table.id
+)
 
 cluster = aws.ecs.Cluster(ecs_cluster_name,
                           name=ecs_cluster_name,
@@ -221,8 +263,8 @@ service = awsx.ecs.FargateService(service_name,
                                   cluster=cluster.arn,
                                   task_definition=task_definition.arn,
                                   network_configuration={
-                                      "subnets": [subnet1.id, subnet2.id],
-                                      "assignPublicIp": True,
+                                      "subnets": [private_subnet1.id],
+                                      "assignPublicIp": False,
                                       "securityGroups": [sg.id],
                                   },
                                   load_balancers=[{
