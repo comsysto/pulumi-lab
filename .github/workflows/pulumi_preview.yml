@@ -9,9 +9,6 @@ on:
         options: 
         - dev
         default: dev
-      test_input:
-        type: string
-        required: true
 
 jobs:
 
