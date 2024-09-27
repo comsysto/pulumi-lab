@@ -1,44 +1,25 @@
-from pulumi import export, ResourceOptions
+import pulumi 
 import pulumi_aws as aws
 import pulumi_awsx as awsx
 import json
 
-# Define a prefix
-prefix = "pulumi-lab"
-short_prefix="pulumi"
+# Variables
+config = pulumi.Config()
 
-# Helper function to add prefix
+region = config.require("region")
+az_number = config.require_int("az_number")
+prefix = config.require("prefix")
+short_prefix = config.require("short_prefix")
+image_uri = config.require("image_uri")
+cpu = config.require("cpu")
+memory = config.require("memory")
+container_port = config.require_int("container_port")
+
+
+# Functions
 def prefixed(name):
     return f"{prefix}-{name}"
 
-# Resource names
-resource_group_name = prefixed("resource-group")
-vpc_name = prefixed("vpc")
-public_subnet1_name = prefixed("public-subnet1")
-public_subnet2_name = prefixed("public-subnet2")
-internet_gateway_name = prefixed("internet-gateway")
-route_table_name = prefixed("route-table")
-route_table_association1_name = prefixed("route-table-assoc1")
-route_table_association2_name = prefixed("route-table-assoc2")
-ecs_cluster_name = prefixed("ecs-cluster")
-sg_name = prefixed("sg")
-alb_name = prefixed("alb")
-tg_name = prefixed("tg")
-wl_name = prefixed("listener")
-role_name = prefixed("task-exec-role")
-rpa_name = prefixed("task-exec-policy")
-task_definition_name = prefixed("app-task-definition")
-service_name = prefixed("service")
-
-# Define ECS cluster and other variables (Replace with actual values or relevant resources)
-image_uri = "nginx"
-cpu = "256"  # CPU units
-memory = "512"  # Memory in MiB
-container_port = 80  # Container port
-default_target_group = "arn:aws:elasticloadbalancing:region:account_id:targetgroup/your-targetgroup"
-
-
-# Define a helper function to create tags
 def create_tags(name):
     return {
         "Name": name,
@@ -46,7 +27,8 @@ def create_tags(name):
     }
 
 
-# Define a resource group
+# Resources
+resource_group_name = prefixed("resource-group")
 resource_group = aws.resourcegroups.Group(resource_group_name,
                                           name=resource_group_name,
                                           resource_query=aws.resourcegroups.GroupResourceQueryArgs(
@@ -65,7 +47,8 @@ resource_group = aws.resourcegroups.Group(resource_group_name,
                                           tags=create_tags(resource_group_name)
                                           )
 
-# Create a new VPC
+
+vpc_name = prefixed("vpc")
 vpc = aws.ec2.Vpc(vpc_name,
                   cidr_block="10.0.0.0/16",
                   enable_dns_hostnames=True,
@@ -73,46 +56,94 @@ vpc = aws.ec2.Vpc(vpc_name,
                   tags=create_tags(vpc_name)
                   )
 
-# Create a public subnets
-subnet1 = aws.ec2.Subnet(public_subnet1_name,
-                        vpc_id=vpc.id,
-                        cidr_block="10.0.1.0/24",
-                        availability_zone="eu-west-1a",  # Adjust as needed
-                        tags=create_tags(public_subnet1_name)
-                        )
-subnet2 = aws.ec2.Subnet(public_subnet2_name,
-                        vpc_id=vpc.id,
-                        cidr_block="10.0.2.0/24",
-                        availability_zone="eu-west-1b",  # Adjust as needed
-                        tags=create_tags(public_subnet2_name)
-                        )
 
-# Create an internet gateway
+internet_gateway_name = prefixed("internet-gateway")
 internet_gateway = aws.ec2.InternetGateway(internet_gateway_name,
                                            vpc_id=vpc.id,
                                            tags=create_tags(internet_gateway_name)
                                            )
 
-# Create a route table
-route_table = aws.ec2.RouteTable(route_table_name,
+
+public_route_table_name = prefixed("public-route-table")
+public_route_table = aws.ec2.RouteTable(public_route_table_name,
                                  vpc_id=vpc.id,
                                  routes=[{
                                      "cidr_block": "0.0.0.0/0",
                                      "gateway_id": internet_gateway.id
                                  }],
-                                 tags=create_tags(route_table_name)
+                                 tags=create_tags(public_route_table_name)
                                  )
 
-# Associate the single subnet with the route table
-route_table_association1 = aws.ec2.RouteTableAssociation(route_table_association1_name,
-                                                        subnet_id=subnet1.id,
-                                                        route_table_id=route_table.id
-                                                        )
-route_table_association2 = aws.ec2.RouteTableAssociation(route_table_association2_name,
-                                                        subnet_id=subnet2.id,
-                                                        route_table_id=route_table.id
-                                                        )
 
+public_subnets_ids = []
+private_subnets_ids = []
+
+for i in range(az_number):
+
+    public_subnet_name=f"{prefixed("public-subnet")}-{i}"
+    public_subnet = aws.ec2.Subnet(
+        public_subnet_name, 
+        vpc_id=vpc.id, 
+        cidr_block=f"10.0.{i+1}.0/24", 
+        availability_zone=f"{region}{chr(97+i)}",
+        map_public_ip_on_launch=True,
+        tags=create_tags(public_subnet_name)
+    )
+    public_subnets_ids.append(public_subnet.id)
+
+
+    public_route_table_assoc_name=f"{prefixed("public-route-table-assoc")}-{i}"
+    public_route_table_assoc = aws.ec2.RouteTableAssociation(public_route_table_assoc_name,
+                                                            subnet_id=public_subnet.id,
+                                                            route_table_id=public_route_table.id
+                                                            )
+
+
+    private_subnet_name=f"{prefixed("private-subnet")}-{i}"
+    private_subnet = aws.ec2.Subnet(
+        private_subnet_name, 
+        vpc_id=vpc.id, 
+        cidr_block=f"10.0.{i+4}.0/24", 
+        availability_zone=f"{region}{chr(97+i)}",
+        map_public_ip_on_launch=False,
+        tags=create_tags(private_subnet_name)
+    )
+    private_subnets_ids.append(private_subnet.id)
+
+
+    eip_name=f"{prefixed("eip")}-{i}"
+    eip = aws.ec2.Eip(eip_name,
+        tags=create_tags(eip_name)
+    )
+
+
+    nat_gw_name=f"{prefixed("nat-gw")}-{i}"
+    nat_gateway = aws.ec2.NatGateway(nat_gw_name,
+        subnet_id=public_subnet.id,
+        allocation_id=eip.allocation_id,
+        tags=create_tags(nat_gw_name)
+    )
+
+
+    private_route_table_name=f"{prefixed("private-route-table")}-{i}"
+    private_route_table = aws.ec2.RouteTable(private_route_table_name,
+        vpc_id=vpc.id,
+        routes=[{
+            "cidr_block": "0.0.0.0/0",
+            "gateway_id": nat_gateway.id
+        }],
+        tags=create_tags(private_route_table_name)
+    )
+
+
+    private_route_table_assoc_name=f"{prefixed("private-route-table-assoc")}-{i}"
+    private_route_table_assoc = aws.ec2.RouteTableAssociation(private_route_table_assoc_name,
+                                                            subnet_id=private_subnet.id,
+                                                            route_table_id=private_route_table.id
+                                                            )
+
+
+ecs_cluster_name = prefixed("ecs-cluster")
 cluster = aws.ecs.Cluster(ecs_cluster_name,
                           name=ecs_cluster_name,
 
@@ -120,7 +151,7 @@ cluster = aws.ecs.Cluster(ecs_cluster_name,
                           )
 
 
-# Create a SecurityGroup that permits HTTP ingress and unrestricted egress.
+sg_name = prefixed("sg")
 sg = aws.ec2.SecurityGroup(sg_name,
                            name=sg_name,
                            vpc_id=vpc.id,
@@ -141,18 +172,18 @@ sg = aws.ec2.SecurityGroup(sg_name,
                            )
 
 
-
-# Create a load balancer to listen for HTTP traffic on port 80.
+alb_name = prefixed("alb")
 alb = aws.lb.LoadBalancer(alb_name,
     name=alb_name,
 	security_groups=[sg.id],
-	subnets=[subnet1.id, subnet2.id],
+	subnets=public_subnets_ids,
     tags=create_tags(alb_name)
 )
 
+
+tg_name = prefixed("tg")
 tg = aws.lb.TargetGroup(tg_name,
     name_prefix=short_prefix,
-    #name=tg_name,
 	port=80,
 	protocol='HTTP',
 	target_type='ip',
@@ -160,7 +191,9 @@ tg = aws.lb.TargetGroup(tg_name,
     tags=create_tags(tg_name)
 )
 
-wl = aws.lb.Listener(wl_name,
+
+listener_name = prefixed("listener")
+listener = aws.lb.Listener(listener_name,
 	load_balancer_arn=alb.arn,
 	port=80,
     default_actions=[
@@ -169,11 +202,11 @@ wl = aws.lb.Listener(wl_name,
             target_group_arn=tg.arn,
         ),
     ],
-    #opts=ResourceOptions(replace_on_changes=["*"], depends_on=[tg]), 
-    tags=create_tags(wl_name)
+    tags=create_tags(listener_name)
 )
 
 
+role_name = prefixed("task-exec-role")
 role = aws.iam.Role(role_name,
                     assume_role_policy=json.dumps({
                         'Version': '2008-10-17',
@@ -189,13 +222,15 @@ role = aws.iam.Role(role_name,
                     tags=create_tags(role_name),
                     )
 
+
+rpa_name = prefixed("task-exec-policy")
 rpa = aws.iam.RolePolicyAttachment(rpa_name,
                                    role=role.name,
                                    policy_arn='arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy',
                                    )
 
 
-# Spin up a load balanced service running our container image.
+task_definition_name = prefixed("app-task-definition")
 task_definition = aws.ecs.TaskDefinition(task_definition_name,
                                          family='fargate-task-definition',
                                          cpu=cpu,
@@ -216,13 +251,13 @@ task_definition = aws.ecs.TaskDefinition(task_definition_name,
                                          )
 
 
-# Create the ECS Fargate service
+service_name = prefixed("service")
 service = awsx.ecs.FargateService(service_name,
                                   cluster=cluster.arn,
                                   task_definition=task_definition.arn,
                                   network_configuration={
-                                      "subnets": [subnet1.id, subnet2.id],
-                                      "assignPublicIp": True,
+                                      "subnets": private_subnets_ids,
+                                      "assignPublicIp": False,
                                       "securityGroups": [sg.id],
                                   },
                                   load_balancers=[{
@@ -233,5 +268,5 @@ service = awsx.ecs.FargateService(service_name,
                                   tags=create_tags(service_name),
                                   )
 
-
-export('url', alb.dns_name)
+# Outputs
+pulumi.export('url', alb.dns_name)
