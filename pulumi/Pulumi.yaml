@@ -1,4 +1,4 @@
-name: test-deployment
+name: fargate-deployment
 runtime:
   name: python
   options:
