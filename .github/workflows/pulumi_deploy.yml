@@ -1,4 +1,4 @@
-name: Pulumi Deploy
+name: Pulumi
 
 on:
   workflow_dispatch:
@@ -31,7 +31,7 @@ env:
 jobs:
 
   preview:
-    name: Preview
+    name: Pulumi Preview
     runs-on: ubuntu-latest
 
     steps:
@@ -80,7 +80,7 @@ jobs:
 
 
   deploy:
-    name: Deploy
+    name: Pulumi Deploy
     runs-on: ubuntu-latest
     needs: preview
     environment: ${{ inputs.environment }}
