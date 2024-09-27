@@ -35,10 +35,15 @@ jobs:
         run: |
           pip install pulumi
           pulumi login s3://pulumi-lab-state2
+          pulumi stack select dev
+        working-directory: pulumi
 
       - name: Pulumi Preview
         run: |
-          pulumi stack select dev
-          pulumi --color always -j preview
+          pulumi preview
         working-directory: pulumi
 
+      - name: Pulumi Preview Details
+        run: |
+          pulumi preview --color always --json
+        working-directory: pulumi
