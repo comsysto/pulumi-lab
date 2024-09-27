@@ -20,31 +20,34 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.12
+      - name: Env
+        run: env
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-region: ${{ env.AWS_REGION }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+      # - uses: actions/setup-python@v2
+      #   with:
+      #     python-version: 3.12
 
-      - name: Install pulumi and login to S3
-        run: |
-          pip install pulumi
-          pulumi login s3://pulumi-lab-state2
-          pulumi stack select dev
-        working-directory: pulumi
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+      #     aws-region: ${{ env.AWS_REGION }}
+      #     aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+      #     aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
 
-      - name: Pulumi Preview
-        run: |
-          pulumi preview
-        working-directory: pulumi
+      # - name: Install pulumi and login to S3
+      #   run: |
+      #     pip install pulumi
+      #     pulumi login s3://pulumi-lab-state2
+      #     pulumi stack select dev
+      #   working-directory: pulumi
 
-      - name: Pulumi Preview Details
-        run: |
-          pulumi preview --json
-        working-directory: pulumi
+      # - name: Pulumi Preview
+      #   run: |
+      #     pulumi preview
+      #   working-directory: pulumi
+
+      # - name: Pulumi Preview Details
+      #   run: |
+      #     pulumi preview --json
+      #   working-directory: pulumi
