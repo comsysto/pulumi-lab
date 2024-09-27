@@ -54,7 +54,7 @@ jobs:
 
       - name: Setup pulumi stack and variables
         run: |
-          pulumi stack init $GITHUB_ENVIRONMENT
+          pulumi stack select --create $GITHUB_ENVIRONMENT
           pulumi config set aws:region $AWS_REGION
           pulumi config set region $AWS_REGION
           pulumi config set az_number $AWS_REGION
