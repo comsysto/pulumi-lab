@@ -58,6 +58,7 @@ env:
   CONTAINER_PORT: ${{ inputs.container_port }}
   HOST_PORT: ${{ inputs.host_port }}
 
+  PULUMI_TASK: ${{ inputs.pulumi_task }}
 
 jobs:
 
@@ -102,29 +103,28 @@ jobs:
         working-directory: pulumi
 
       - name: Pulumi Deploy Preview
-        if: ${{ inputs.pulumi_task }} == 'deploy'
+        if: env.PULUMI_TASK == 'deploy'
         run: |
           pulumi preview
         working-directory: pulumi
 
       - name: Pulumi Deploy Preview (Detailed)
-        if: ${{ inputs.pulumi_task }} == 'deploy'
+        if: env.PULUMI_TASK == 'deploy'
         run: |
           pulumi preview --json
         working-directory: pulumi
 
       - name: Pulumi Destroy Preview
-        if: ${{ inputs.pulumi_task }} == 'destroy'
+        if: env.PULUMI_TASK == 'destroy'
         run: |
           pulumi destroy --diff
         working-directory: pulumi
 
 
-  deploy:
-    name: Pulumi Deploy
+  apply:
+    name: Pulumi Apply
     runs-on: ubuntu-latest
     needs: preview
-    if: ${{ inputs.pulumi_task }} == 'deploy'
     environment: ${{ inputs.environment }}
 
     steps:
@@ -163,56 +163,14 @@ jobs:
           pulumi config set host_port $HOST_PORT
         working-directory: pulumi
 
-      - name: Pulumi Deploy Infrastructure
+      - name: Pulumi Deploy
         run: |
           pulumi up --yes
         working-directory: pulumi
+        if: env.PULUMI_TASK == 'deploy'
 
-
-  destroy:
-    name: Pulumi Destroy
-    runs-on: ubuntu-latest
-    needs: preview
-    if: ${{ inputs.pulumi_task }} == 'destroy'
-    environment: ${{ inputs.environment }}
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.12
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-region: ${{ env.AWS_REGION }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
-
-      - name: Install pulumi and login to S3
-        run: |
-          pip install pulumi
-          pulumi login s3://pulumi-lab-state2
-
-      - name: Setup pulumi stack and variables
-        run: |
-          pulumi stack select --create $GITHUB_ENVIRONMENT
-          pulumi config set aws:region $AWS_REGION
-          pulumi config set region $AWS_REGION
-          pulumi config set az_number $AWS_AZ_NUMBER
-          pulumi config set prefix $AWS_RESOURCE_PREFIX
-          pulumi config set short_prefix $AWS_RESOURCE_SHORT_PREFIX
-          pulumi config set image_uri $CONTAINER_IMAGE_URI
-          pulumi config set cpu $CONTAINER_CPU
-          pulumi config set memory $CONTAINER_MEMORY
-          pulumi config set container_port $CONTAINER_PORT
-          pulumi config set host_port $HOST_PORT
-        working-directory: pulumi
-
-      - name: Pulumi Deploy Infrastructure
+      - name: Pulumi Destroy
         run: |
           pulumi destroy --yes
         working-directory: pulumi
+        if: env.PULUMI_TASK == 'destroy'
