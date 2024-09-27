@@ -44,7 +44,8 @@ jobs:
       #   run: echo "::add-mask::${{ inputs.test_input }}"
 
       - name: Print secret vars
-        run: echo "$TEST_INPUT"
+        run: echo -n "$TEST_INPUT" | wc -c
+
 
       # - uses: actions/setup-python@v2
       #   with:
