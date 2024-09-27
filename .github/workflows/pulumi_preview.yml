@@ -31,21 +31,12 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
 
-      - name: Install requirements
-        run: pip install -r requirements.txt
-        working-directory: pulumi
+      - name: Install pulumi
+        run: pip install pulumi
 
-      - name: Applying infrastructure 🚀
+      - name: Pulumi Preview
         run: |
           pulumi login s3://pulumi-lab-state2
           pulumi stack select dev
           pulumi preview
         working-directory: pulumi
-
-      # - name: Applying infrastructure 🚀
-      #   uses: pulumi/actions@v4
-      #   with:
-      #     command: preview
-      #     stack-name: test-deployment/dev
-      #     cloud-url: s3://pulumi-lab-state2
-
