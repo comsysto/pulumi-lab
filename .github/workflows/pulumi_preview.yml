@@ -1,0 +1,53 @@
+name: Pulumi
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+
+  preview:
+    name: Pulumi Preview
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Env
+        run: env
+
+      # - uses: actions/setup-python@v2
+      #   with:
+      #     python-version: 3.12
+
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+      #     aws-region: ${{ env.AWS_REGION }}
+      #     aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+      #     aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+
+      # - name: Install pulumi and login to S3
+      #   run: |
+      #     pip install pulumi
+      #     pulumi login s3://pulumi-lab-state2
+      #     pulumi stack select dev
+      #   working-directory: pulumi
+
+      # - name: Pulumi Preview
+      #   run: |
+      #     pulumi preview
+      #   working-directory: pulumi
+
+      # - name: Pulumi Preview Details
+      #   run: |
+      #     pulumi preview --json
+      #   working-directory: pulumi
