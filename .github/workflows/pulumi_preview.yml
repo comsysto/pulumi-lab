@@ -2,6 +2,7 @@ name: Pulumi
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
 
