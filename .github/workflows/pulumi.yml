@@ -1,4 +1,4 @@
-name: Pulumi Infrastructure Deployment
+name: Pulumi
 
 on:
   workflow_dispatch:
