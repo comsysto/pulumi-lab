@@ -39,6 +39,6 @@ jobs:
         uses: pulumi/actions@v4
         with:
           command: preview
-          stack-name: dev
+          stack-name: test-deployment/dev
           cloud-url: s3://pulumi-lab-state2
 
