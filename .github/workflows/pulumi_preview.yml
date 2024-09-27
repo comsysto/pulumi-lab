@@ -27,6 +27,7 @@ jobs:
 
       AWS_RESOURCE_PREFIX: "pulumi-${{ inputs.environment }}"
       AWS_RESOURCE_SHORT_PREFIX: "p-${{ inputs.environment }}" # Max 6 chars
+      AWS_AZ_NUMBER: "2"
       CONTAINER_IMAGE_URI: "nginx"
       CONTAINER_CPU: "256"
       CONTAINER_MEMORY: "512"
@@ -57,7 +58,7 @@ jobs:
           pulumi stack select --create $GITHUB_ENVIRONMENT
           pulumi config set aws:region $AWS_REGION
           pulumi config set region $AWS_REGION
-          pulumi config set az_number $AWS_REGION
+          pulumi config set az_number $AWS_AZ_NUMBER
           pulumi config set prefix $AWS_RESOURCE_PREFIX
           pulumi config set short_prefix $AWS_RESOURCE_SHORT_PREFIX
           pulumi config set image_uri $CONTAINER_IMAGE_URI
