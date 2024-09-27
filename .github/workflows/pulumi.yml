@@ -31,7 +31,7 @@ on:
         default: "80"
       host_port:
         type: string
-        description: Container Port
+        description: Host Port
         default: "80"
 
 env:
