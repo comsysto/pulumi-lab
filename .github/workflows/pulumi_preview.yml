@@ -17,8 +17,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
 
       - uses: actions/setup-python@v2
         with:
@@ -38,6 +36,7 @@ jobs:
       - run: |
           pulumi login s3://pulumi-lab-state2
           pulumi preview
+        working-directory: pulumi
 
       # - name: Applying infrastructure 🚀
       #   uses: pulumi/actions@v4
