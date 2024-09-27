@@ -1,4 +1,4 @@
-name: Pulumi Preview
+name: Pulumi Deploy
 
 on:
   workflow_dispatch:
@@ -12,8 +12,8 @@ on:
 
 jobs:
 
-  preview:
-    name: Pulumi Preview
+  deploy:
+    name: Pulumi Deploy
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     env:
@@ -66,12 +66,7 @@ jobs:
           pulumi config set container_port $CONTAINER_PORT
         working-directory: pulumi
 
-      - name: Pulumi Preview
+      - name: Pulumi Deploy Infrastructure
         run: |
-          pulumi preview
-        working-directory: pulumi
-
-      - name: Pulumi Preview Details
-        run: |
-          pulumi preview --json
+          pulumi up --yes
         working-directory: pulumi
