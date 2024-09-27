@@ -15,7 +15,7 @@ on:
         options: 
         - deploy
         - destroy
-        default: dev
+        default: deploy
       az_number:
         type: string
         description: Number of Availability Zones
