@@ -117,7 +117,7 @@ jobs:
       - name: Pulumi Destroy Preview
         if: env.PULUMI_TASK == 'destroy'
         run: |
-          pulumi destroy --diff
+          pulumi destroy --preview-only
         working-directory: pulumi
 
 
