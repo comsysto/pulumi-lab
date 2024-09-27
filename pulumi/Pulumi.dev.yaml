@@ -1,3 +1,11 @@
 encryptionsalt: v1:4k/5ylcQNM8=:v1:6/NDI0t2CyvaIWis:ZFdHQBi1FhOS4hQT5OFgj2jPsVrxLQ==
 config:
   aws:region: eu-west-1
+  region: eu-west-1
+  az_number: 2
+  prefix: pulumi-lab
+  short_prefix: pulumi
+  image_uri: nginx
+  cpu: 256
+  memory: 512
+  container_port: 80
