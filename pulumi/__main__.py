@@ -48,11 +48,11 @@ vpc = aws.ec2.Vpc("vpc",
                   )
 
 # Create a public subnets
-subnet = aws.ec2.Subnet("public-subnet",
+subnet1 = aws.ec2.Subnet("public-subnet1",
                         vpc_id=vpc.id,
                         cidr_block="10.0.1.0/24",
                         availability_zone="eu-west-1a",  # Adjust as needed
-                        tags=create_tags("public-subnet")
+                        tags=create_tags("public-subnet1")
                         )
 subnet2 = aws.ec2.Subnet("public-subnet2",
                         vpc_id=vpc.id,
@@ -79,7 +79,7 @@ route_table = aws.ec2.RouteTable("route-table",
 
 # Associate the single subnet with the route table
 route_table_association1 = aws.ec2.RouteTableAssociation("route-table-assoc1",
-                                                        subnet_id=subnet.id,
+                                                        subnet_id=subnet1.id,
                                                         route_table_id=route_table.id
                                                         )
 route_table_association2 = aws.ec2.RouteTableAssociation("route-table-assoc2",
@@ -120,7 +120,7 @@ sg = aws.ec2.SecurityGroup('sg',
 alb = aws.lb.LoadBalancer('alb',
     name=(prefixed("alb")),
 	security_groups=[sg.id],
-	subnets=[subnet.id, subnet2.id],
+	subnets=[subnet1.id, subnet2.id],
     tags=create_tags("alb")
 )
 
@@ -200,7 +200,7 @@ service = awsx.ecs.FargateService("service",
                                   cluster=cluster.arn,
                                   task_definition=task_definition.arn,
                                   network_configuration={
-                                      "subnets": [subnet.id, subnet2.id],
+                                      "subnets": [subnet1.id, subnet2.id],
                                       "assignPublicIp": True,
                                       "securityGroups": [sg.id],
                                   },
