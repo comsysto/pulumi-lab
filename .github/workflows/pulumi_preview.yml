@@ -46,5 +46,5 @@ jobs:
 
       - name: Pulumi Preview Details
         run: |
-          pulumi preview --color always --json
+          pulumi preview --json
         working-directory: pulumi
