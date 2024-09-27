@@ -9,7 +9,10 @@ on:
         options: 
         - dev
         default: dev
-
+      image_uri:
+        type: string
+        description: Image URI
+        default: nginx
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -22,7 +25,7 @@ env:
   AWS_RESOURCE_PREFIX: "pulumi-${{ inputs.environment }}"
   AWS_RESOURCE_SHORT_PREFIX: "p-${{ inputs.environment }}" # Max 6 chars
   AWS_AZ_NUMBER: "2"
-  CONTAINER_IMAGE_URI: "nginx"
+  CONTAINER_IMAGE_URI: ${{ inputs.image_uri }}
   CONTAINER_CPU: "256"
   CONTAINER_MEMORY: "512"
   CONTAINER_PORT: "80"
