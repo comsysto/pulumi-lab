@@ -102,19 +102,19 @@ jobs:
         working-directory: pulumi
 
       - name: Pulumi Deploy Preview
-        if: env.PULUMI_TASK == 'deploy'
+        if: ${{ inputs.pulumi_task }} == 'deploy'
         run: |
           pulumi preview
         working-directory: pulumi
 
       - name: Pulumi Deploy Preview (Detailed)
-        if: env.PULUMI_TASK == 'deploy'
+        if: ${{ inputs.pulumi_task }} == 'deploy'
         run: |
           pulumi preview --json
         working-directory: pulumi
 
       - name: Pulumi Destroy Preview
-        if: env.PULUMI_TASK == 'destroy'
+        if: ${{ inputs.pulumi_task }} == 'destroy'
         run: |
           pulumi destroy --diff
         working-directory: pulumi
