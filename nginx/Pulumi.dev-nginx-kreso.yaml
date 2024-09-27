@@ -1,6 +1,0 @@
-encryptionsalt: v1:BB1SEXVPDA0=:v1:T+fsxUkgvCIsFEy7:qjeBo7Ib1SbEZ6DaVUlBF261lXYkSA==
-config:
-  aws:region: eu-west-1
-  nginx-kreso-ecs:containerPort: "80"
-  nginx-kreso-ecs:cpu: "512"
-  nginx-kreso-ecs:memory: "128"

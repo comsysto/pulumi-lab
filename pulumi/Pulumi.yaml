@@ -1,10 +1,10 @@
-name: quickstart
+name: test-deployment
 runtime:
   name: python
   options:
     toolchain: pip
     virtualenv: venv
-description: A minimal AWS Python Pulumi program
+description: Pulumi Lab Deployment
 config:
   pulumi:tags:
     value:
