@@ -39,7 +39,7 @@ jobs:
       - name: Pulumi Preview
         run: |
           pulumi stack select dev
-          pulumi preview > pulumi_preview.txt
+          pulumi preview | tee pulumi_preview.txt
         working-directory: pulumi
 
       - name: Upload Artifacts
