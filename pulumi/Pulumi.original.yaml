@@ -9,3 +9,4 @@ config:
   cpu: 256
   memory: 512
   container_port: 80
+  host_port: 80

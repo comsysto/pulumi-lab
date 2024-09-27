@@ -14,7 +14,7 @@ image_uri = config.require("image_uri")
 cpu = config.require("cpu")
 memory = config.require("memory")
 container_port = config.require_int("container_port")
-
+host_port = config.require_int("host_port")
 
 # Functions
 def prefixed(name):
@@ -242,8 +242,8 @@ task_definition = aws.ecs.TaskDefinition(task_definition_name,
                                              'name': 'app',
                                              'image': image_uri,
                                              'portMappings': [{
-                                                 'containerPort': 80,
-                                                 'hostPort': 80,
+                                                 'containerPort': container_port,
+                                                 'hostPort': host_port,
                                                  'protocol': 'tcp'
                                              }]
                                          }]),
